@@ -1,5 +1,18 @@
-### 9GAG 内容抓取
+## 9GAG 内容抓取
 
+### 运行
+
+修改 `app.js`:
+
+* `pageCount` 为每个分类要抓取的页数，超过实际页数时自动停止。
+* `type` 为获取的数据类型。`hot`、`trending`、`fresh`对应最热、上升、最新
+* `category` 数组为要抓取的分类
+
+执行`node app.js`运行代码或使用pm2守护进程：`pm2 start app.js --name '9gag'`。
+
+下载完的视频、图片及JSON文件存储在`downloads`对应目录下，完整日志在`logs`目录。
+
+### 程序说明
 
 1、总共52个分类。
 
@@ -182,6 +195,7 @@ image700 : {
 }
 ```
 
-获取评论
+获取评论接口
+
 
 `https://comment-cdn.9gag.com/v1/cacheable/comment-list.json?appId=a_dd8f2b7d304a10edaf6f29517ea0ca4100a43d1b&url=http:%2F%2F9gag.com%2Fgag%2FaAxWgdR&count=10&order=score`

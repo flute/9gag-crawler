@@ -5,7 +5,7 @@ const fs = require('fs')
 // log
 const log = require('./utils/log').getLogger('debug')
 // 每个分类要抓取的总页数
-let pageCount = 1
+let pageCount = 1000
 // type = 'hot','trending','fresh'
 let type = 'fresh'
 
@@ -160,43 +160,43 @@ const getMultiList = async category => {
  */
 const download = (category, media, next) => {
     //return new Promise((resolve, reject) => {
-        let isExist = isFileExist(media.id)
-        if (isExist) return next(null)
+    let isExist = isFileExist(media.id)
+    if (isExist) return next(null)
 
-        let filePath
-        if (media.type == 'video') {
-            filePath = `${videoDlPath}/${media.id}.mp4`
-        } else if (media.type == 'img') {
-            filePath = `${imgDlPath}/${media.id}.jpg`
-        } else return next(null)
+    let filePath
+    if (media.type == 'video') {
+        filePath = `${videoDlPath}/${media.id}.mp4`
+    } else if (media.type == 'img') {
+        filePath = `${imgDlPath}/${media.id}.jpg`
+    } else return next(null)
 
-        request(media.url)
-            .on('response', function (res) {
-                // create file write stream
-                var fws = fs.createWriteStream(filePath);
-                // setup piping
-                res.pipe(fws);
-                // finish
-                res.on('end', function (e) {
-                    log.info(`finish download ${category} ${filePath}`)
-                    saveJsonData(media.type, {
-                        id: media.id,
-                        category: category,
-                        desc: media.desc
-                    })
-                    if (media.type == 'video') videoAmount++
-                    else imgAmount++
-
-                    //return resolve(filePath)
-                    return next(null)
-                });
-                // error handler
-                res.on('error', err => {
-                    log.error('download error', err)
-                    //return reject(err)
-                    return next(null)
+    request(media.url)
+        .on('response', function (res) {
+            // create file write stream
+            var fws = fs.createWriteStream(filePath);
+            // setup piping
+            res.pipe(fws);
+            // finish
+            res.on('end', function (e) {
+                log.info(`finish download ${category} ${filePath}`)
+                saveJsonData(media.type, {
+                    id: media.id,
+                    category: category,
+                    desc: media.desc
                 })
+                if (media.type == 'video') videoAmount++
+                else imgAmount++
+
+                //return resolve(filePath)
+                return next(null)
             });
+            // error handler
+            res.on('error', err => {
+                log.error('download error', err)
+                //return reject(err)
+                return next(null)
+            })
+        });
     //})
 }
 
@@ -249,8 +249,6 @@ const saveJsonData = (type, data) => {
 const convertVideoToGift = () => {
     let videoPath = './233.mp4'
     var command = ffmpeg(videoPath)
-        /* .audioCodec('libfaac')
-        .videoCodec('libx264') */
         .format('gif');
     command.save('./233.gif');
 }
@@ -302,29 +300,19 @@ const task = async (category, next) => {
         img
     } = mediaFilter(videoLists)
     log.info(`${videoLists.length} 个内容，有声视频共 ${video} 个，图片共 ${img} 个`)
-    
+
     let dlActions = videos.map(video => next => {
         return download(category, video, next)
     })
 
     async.series(dlActions, (err, result) => {
-        if(err) {
+        if (err) {
             log.error(`finish【${category}】all download error`, error)
             return next(error)
         }
         log.info(`finish【${category}】all downloads success`, result.filter(item => item).length)
-            return next(null)
+        return next(null)
     })
-    /* Promise.all(dlActions)
-        .then(result => {
-            log.info(`finish【${category}】all downloads success`, result.filter(item => item).length)
-            return next(null)
-        })
-        .catch(error => {
-            log.error(`finish【${category}】all download error`, error)
-            return next(error)
-        })
- */
 }
 
 const main = () => {
